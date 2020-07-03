@@ -2092,6 +2092,7 @@ export class TTResizableColumn implements AfterViewInit, OnDestroy {
             this.zone.runOutsideAngular(() => {
                 this.resizerMouseDownListener = this.onMouseDown.bind(this);
                 this.resizer.addEventListener('mousedown', this.resizerMouseDownListener);
+                this.resizer.addEventListener('touchstart', this.resizerMouseDownListener);
             });
         }
     }
