@@ -842,17 +842,35 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
     }
 
     onColumnResizeBegin(event) {
+        let pageX: number;
+        if (event instanceof MouseEvent) {
+          pageX = event.pageX
+        }
+
+        if (event instanceof TouchEvent) {
+          pageX = event.changedTouches[0].pageX
+        } 
+
         let containerLeft = DomHandler.getOffset(this.containerViewChild.nativeElement).left;
-        this.lastResizerHelperX = (event.pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft);
+        this.lastResizerHelperX = (pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft);
         event.preventDefault();
     }
 
     onColumnResize(event) {
+        let pageX: number;
+        if (event instanceof MouseEvent) {
+          pageX = event.pageX
+        }
+
+        if (event instanceof TouchEvent) {
+          pageX = event.changedTouches[0].pageX
+        }
+
         let containerLeft = DomHandler.getOffset(this.containerViewChild.nativeElement).left;
         DomHandler.addClass(this.containerViewChild.nativeElement, 'ui-unselectable-text');
         this.resizeHelperViewChild.nativeElement.style.height = this.containerViewChild.nativeElement.offsetHeight + 'px';
         this.resizeHelperViewChild.nativeElement.style.top = 0 + 'px';
-        this.resizeHelperViewChild.nativeElement.style.left = (event.pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft) + 'px';
+        this.resizeHelperViewChild.nativeElement.style.left = (pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft) + 'px';
 
         this.resizeHelperViewChild.nativeElement.style.display = 'block';
     }
@@ -2082,20 +2100,24 @@ export class TTResizableColumn implements AfterViewInit, OnDestroy {
         this.zone.runOutsideAngular(() => {
             this.documentMouseMoveListener = this.onDocumentMouseMove.bind(this);
             document.addEventListener('mousemove', this.documentMouseMoveListener);
+            document.addEventListener('touchmove', this.documentMouseMoveListener);
 
             this.documentMouseUpListener = this.onDocumentMouseUp.bind(this);
             document.addEventListener('mouseup', this.documentMouseUpListener);
+            document.addEventListener('touchend', this.documentMouseUpListener);
         });
     }
 
     unbindDocumentEvents() {
         if (this.documentMouseMoveListener) {
             document.removeEventListener('mousemove', this.documentMouseMoveListener);
+            document.removeEventListener('touchmove', this.documentMouseMoveListener);
             this.documentMouseMoveListener = null;
         }
 
         if (this.documentMouseUpListener) {
             document.removeEventListener('mouseup', this.documentMouseUpListener);
+            document.removeEventListener('touchend', this.documentMouseUpListener);
             this.documentMouseUpListener = null;
         }
     }
