@@ -1,4 +1,4 @@
-import { NgModule, AfterContentInit, OnInit, OnDestroy, HostListener, Injectable, Directive, Component, Input, Output, EventEmitter, ContentChildren, TemplateRef, QueryList, ElementRef, NgZone, ViewChild, AfterViewInit, AfterViewChecked, OnChanges, SimpleChanges, ChangeDetectionStrategy} from '@angular/core';
+import { NgModule, AfterContentInit, OnInit, OnDestroy, HostListener, Injectable, Directive, Component, Input, Output, EventEmitter, ContentChildren, TemplateRef, QueryList, ElementRef, NgZone, ViewChild, AfterViewInit, AfterViewChecked, OnChanges, SimpleChanges, ChangeDetectionStrategy, ViewEncapsulation, ChangeDetectorRef} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TreeNode } from 'primeng/api';
 import { Subject, Subscription } from 'rxjs';
@@ -67,7 +67,7 @@ export class TreeTableService {
                 [currentPageReportTemplate]="currentPageReportTemplate" [showCurrentPageReport]="showCurrentPageReport"></p-paginator>
 
             <div class="ui-treetable-wrapper" *ngIf="!scrollable">
-                <table #table class="ui-treetable-table">
+                <table #table class="ui-treetable-table" [ngClass]="tableStyleClass" [ngStyle]="tableStyle">
                     <ng-container *ngTemplateOutlet="colGroupTemplate; context {$implicit: columns}"></ng-container>
                     <thead class="ui-treetable-thead">
                         <ng-container *ngTemplateOutlet="headerTemplate; context: {$implicit: columns}"></ng-container>
@@ -99,7 +99,8 @@ export class TreeTableService {
         </div>
     `,
     providers: [TreeTableService],
-    changeDetection: ChangeDetectionStrategy.Default
+    encapsulation: ViewEncapsulation.None,
+    styleUrls: ['./treetable.css', '../table/table.css']
 })
 export class TreeTable implements AfterContentInit, OnInit, OnDestroy, BlockableUI, OnChanges {
 
@@ -108,6 +109,10 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
     @Input() style: any;
 
     @Input() styleClass: string;
+
+    @Input() tableStyle: any;
+
+    @Input() tableStyleClass: string;
 
     @Input() autoLayout: boolean;
 
@@ -708,8 +713,8 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
             this.onSort.emit({
                 multisortmeta: this.multiSortMeta
             });
-            this.tableService.onSort(this.multiSortMeta);
             this.updateSerializedValue();
+            this.tableService.onSort(this.multiSortMeta);
         }
     }
 
@@ -781,9 +786,9 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
         }
         else if (this.sortMode === 'multiple') {
             let sorted = false;
-            if (this.multiSortMeta) {
+            if (this.multiSortMeta) {
                 for(let i = 0; i < this.multiSortMeta.length; i++) {
-                    if (this.multiSortMeta[i].field == field) {
+                    if (this.multiSortMeta[i].field == field) {
                         sorted = true;
                         break;
                     }
@@ -837,7 +842,7 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
         return data == null || data.length == 0;
     }
 
-    getBlockableElement(): HTMLElement {
+    getBlockableElement(): HTMLElement {
         return this.el.nativeElement.children[0];
     }
 
@@ -850,8 +855,8 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
         if (event instanceof TouchEvent) {
           pageX = event.changedTouches[0].pageX
         } 
-
         let containerLeft = DomHandler.getOffset(this.containerViewChild.nativeElement).left;
+        this.lastResizerHelperX = (event.pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft);
         this.lastResizerHelperX = (pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft);
         event.preventDefault();
     }
@@ -870,8 +875,9 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
         DomHandler.addClass(this.containerViewChild.nativeElement, 'ui-unselectable-text');
         this.resizeHelperViewChild.nativeElement.style.height = this.containerViewChild.nativeElement.offsetHeight + 'px';
         this.resizeHelperViewChild.nativeElement.style.top = 0 + 'px';
-        this.resizeHelperViewChild.nativeElement.style.left = (pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft) + 'px';
+        this.resizeHelperViewChild.nativeElement.style.left = (event.pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft) + 'px';
 
+        this.resizeHelperViewChild.nativeElement.style.left = (pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft) + 'px';
         this.resizeHelperViewChild.nativeElement.style.display = 'block';
     }
 
@@ -1660,7 +1666,8 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
         <ng-container *ngIf="tt.isEmpty()">
             <ng-container *ngTemplateOutlet="tt.emptyMessageTemplate; context: {$implicit: columns}"></ng-container>
         </ng-container>
-    `
+    `,
+    encapsulation: ViewEncapsulation.None
 })
 export class TTBody {
 
@@ -1678,7 +1685,7 @@ export class TTBody {
     template: `
         <div #scrollHeader class="ui-treetable-scrollable-header ui-widget-header">
             <div #scrollHeaderBox class="ui-treetable-scrollable-header-box">
-                <table class="ui-treetable-scrollable-header-table">
+                <table class="ui-treetable-scrollable-header-table" [ngClass]="tt.tableStyleClass" [ngStyle]="tt.tableStyle">
                     <ng-container *ngTemplateOutlet="frozen ? tt.frozenColGroupTemplate||tt.colGroupTemplate : tt.colGroupTemplate; context {$implicit: columns}"></ng-container>
                     <thead class="ui-treetable-thead">
                         <ng-container *ngTemplateOutlet="frozen ? tt.frozenHeaderTemplate||tt.headerTemplate : tt.headerTemplate; context {$implicit: columns}"></ng-container>
@@ -1687,7 +1694,7 @@ export class TTBody {
             </div>
         </div>
         <ng-container *ngIf="!tt.virtualScroll; else virtualScrollTemplate">
-            <div #scrollBody class="ui-treetable-scrollable-body" [ngStyle]="{'max-height': !tt.scrollHeight !== 'flex' ? scrollHeight : undefined}">
+            <div #scrollBody class="ui-treetable-scrollable-body" [ngStyle]="{'max-height': tt.scrollHeight !== 'flex' ? scrollHeight : undefined}">
                 <table #scrollTable [class]="tt.tableStyleClass" [ngStyle]="tt.tableStyle">
                     <ng-container *ngTemplateOutlet="frozen ? tt.frozenColGroupTemplate||tt.colGroupTemplate : tt.colGroupTemplate; context {$implicit: columns}"></ng-container>
                     <tbody class="ui-treetable-tbody" [pTreeTableBody]="columns" [pTreeTableBodyTemplate]="frozen ? tt.frozenBodyTemplate||tt.bodyTemplate : tt.bodyTemplate" [frozen]="frozen"></tbody>
@@ -1696,7 +1703,7 @@ export class TTBody {
             </div>
         </ng-container>
         <ng-template #virtualScrollTemplate>
-            <cdk-virtual-scroll-viewport [itemSize]="tt.virtualRowHeight" [style.height]="!tt.scrollHeight !== 'flex' ? scrollHeight : undefined" 
+            <cdk-virtual-scroll-viewport [itemSize]="tt.virtualRowHeight" [style.height]="tt.scrollHeight !== 'flex' ? scrollHeight : undefined" 
                     [minBufferPx]="tt.minBufferPx" [maxBufferPx]="tt.maxBufferPx" class="ui-treetable-virtual-scrollable-body">
                 <table #scrollTable [class]="tt.tableStyleClass" [ngStyle]="tt.tableStyle">
                     <ng-container *ngTemplateOutlet="frozen ? tt.frozenColGroupTemplate||tt.colGroupTemplate : tt.colGroupTemplate; context {$implicit: columns}"></ng-container>
@@ -1707,7 +1714,7 @@ export class TTBody {
         </ng-template>
         <div #scrollFooter *ngIf="tt.footerTemplate" class="ui-treetable-scrollable-footer ui-widget-header">
             <div #scrollFooterBox class="ui-treetable-scrollable-footer-box">
-                <table class="ui-treetable-scrollable-footer-table">
+                <table class="ui-treetable-scrollable-footer-table" [ngClass]="tt.tableStyleClass" [ngStyle]="tt.tableStyle">
                     <ng-container *ngTemplateOutlet="frozen ? tt.frozenColGroupTemplate||tt.colGroupTemplate : tt.colGroupTemplate; context {$implicit: columns}"></ng-container>
                     <tfoot class="ui-treetable-tfoot">
                         <ng-container *ngTemplateOutlet="frozen ? tt.frozenFooterTemplate||tt.footerTemplate : tt.footerTemplate; context {$implicit: columns}"></ng-container>
@@ -1715,7 +1722,8 @@ export class TTBody {
                 </table>
             </div>
         </div>
-    `
+    `,
+    encapsulation: ViewEncapsulation.None
 })
 export class TTScrollableView implements AfterViewInit, OnDestroy, AfterViewChecked {
 
@@ -2020,7 +2028,9 @@ export class TTSortableColumn implements OnInit, OnDestroy {
     selector: 'p-treeTableSortIcon',
     template: `
         <i class="ui-sortable-column-icon pi pi-fw" [ngClass]="{'pi-sort-amount-up-alt': sortOrder === 1, 'pi-sort-amount-down': sortOrder === -1, 'pi-sort-alt': sortOrder === 0}"></i>
-    `
+    `,
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TTSortIcon implements OnInit, OnDestroy {
 
@@ -2034,9 +2044,10 @@ export class TTSortIcon implements OnInit, OnDestroy {
 
     sortOrder: number;
 
-    constructor(public tt: TreeTable) {
+    constructor(public tt: TreeTable, public cd: ChangeDetectorRef) {
         this.subscription = this.tt.tableService.sortSource$.subscribe(sortMeta => {
             this.updateSortState();
+            this.cd.markForCheck();
         });
     }
 
@@ -2442,7 +2453,9 @@ export class TTContextMenuRow {
                 <span class="ui-chkbox-icon ui-clickable pi" [ngClass]="{'pi-check':checked, 'pi-minus': rowNode.node.partialSelected}"></span>
             </div>
         </div>
-    `
+    `,
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TTCheckbox  {
 
@@ -2456,9 +2469,10 @@ export class TTCheckbox  {
 
     subscription: Subscription;
 
-    constructor(public tt: TreeTable, public tableService: TreeTableService) {
+    constructor(public tt: TreeTable, public tableService: TreeTableService, public cd: ChangeDetectorRef) {
         this.subscription = this.tt.tableService.selectionSource$.subscribe(() => {
             this.checked = this.tt.isSelected(this.rowNode.node);
+            this.cd.markForCheck();
         });
     }
 
@@ -2504,7 +2518,9 @@ export class TTCheckbox  {
                 <span class="ui-chkbox-icon ui-clickable" [ngClass]="{'pi pi-check':checked}"></span>
             </div>
         </div>
-    `
+    `,
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TTHeaderCheckbox  {
 
@@ -2518,7 +2534,7 @@ export class TTHeaderCheckbox  {
 
     valueChangeSubscription: Subscription;
 
-    constructor(public tt: TreeTable, public tableService: TreeTableService) {
+    constructor(public tt: TreeTable, public tableService: TreeTableService, private cd: ChangeDetectorRef) {
         this.valueChangeSubscription = this.tt.tableService.uiUpdateSource$.subscribe(() => {
             this.checked = this.updateCheckedState();
         });
@@ -2559,6 +2575,7 @@ export class TTHeaderCheckbox  {
     }
 
     updateCheckedState() {
+        this.cd.markForCheck();
         let checked: boolean;
         const data = this.tt.filteredNodes||this.tt.value;
 
@@ -2772,7 +2789,8 @@ export class TTEditableColumn implements AfterViewInit {
         <ng-container *ngIf="!tt.editingCell || tt.editingCell !== editableColumn.el.nativeElement">
             <ng-container *ngTemplateOutlet="outputTemplate"></ng-container>
         </ng-container>
-    `
+    `,
+    encapsulation: ViewEncapsulation.None
 })
 export class TreeTableCellEditor implements AfterContentInit {
 
@@ -2889,7 +2907,8 @@ export class TTRow {
             [style.visibility]="rowNode.node.leaf === false || (rowNode.node.children && rowNode.node.children.length) ? 'visible' : 'hidden'" [style.marginLeft]="rowNode.level * 16 + 'px'">
             <i [ngClass]="rowNode.node.expanded ? 'pi pi-fw pi-chevron-down' : 'pi pi-fw pi-chevron-right'"></i>
         </a>
-    `
+    `,
+    encapsulation: ViewEncapsulation.None
 })
 export class TreeTableToggler {
 
