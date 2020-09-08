@@ -850,11 +850,16 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
         let pageX: number;
         if (event instanceof MouseEvent) {
           pageX = event.pageX
+        } else {
+          if (event instanceof TouchEvent) {
+            pageX = event.changedTouches[0].pageX
+          }
         }
 
-        if (event instanceof TouchEvent) {
-          pageX = event.changedTouches[0].pageX
-        } 
+        if (event instanceof window.PointerEvent &&  !!window.PointerEvent) {
+          pageX = event.pageX
+        }
+
         let containerLeft = DomHandler.getOffset(this.containerViewChild.nativeElement).left;
         this.lastResizerHelperX = (event.pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft);
         this.lastResizerHelperX = (pageX - containerLeft + this.containerViewChild.nativeElement.scrollLeft);
@@ -866,9 +871,14 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
         if (event instanceof MouseEvent) {
           pageX = event.pageX
         }
+        else {
+          if (event instanceof TouchEvent) {
+            pageX = event.changedTouches[0].pageX
+          }
+        }
 
-        if (event instanceof TouchEvent) {
-          pageX = event.changedTouches[0].pageX
+        if (event instanceof window.PointerEvent && !!window.PointerEvent) {
+          pageX = event.pageX
         }
 
         let containerLeft = DomHandler.getOffset(this.containerViewChild.nativeElement).left;
