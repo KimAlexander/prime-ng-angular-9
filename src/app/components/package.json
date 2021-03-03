@@ -1,6 +1,6 @@
 {
-    "name": "primeng",
-    "version": "0.0.12",
+    "name": "primeng-internal",
+    "version": "0.0.16",
     "repository": {
       "type": "git",
       "url": "https://github.com/primefaces/primeng"
