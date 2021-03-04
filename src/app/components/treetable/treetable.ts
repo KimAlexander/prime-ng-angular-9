@@ -971,6 +971,27 @@ export class TreeTable implements AfterContentInit, OnInit, OnDestroy, Blockable
                     this.containerViewChild.nativeElement.style.width = containerWidth + 'px';
                 }
             }
+            else if (this.columnResizeMode === 'custom') {
+                if (this.scrollable) {
+                    let scrollableView = this.findParentScrollableView(column);
+                    let scrollableBodyTable = DomHandler.findSingle(scrollableView, '.ui-treetable-scrollable-body table');
+                    let scrollableHeaderTable = DomHandler.findSingle(scrollableView, 'table.ui-treetable-scrollable-header-table');
+                    let scrollableFooterTable = DomHandler.findSingle(scrollableView, 'table.ui-treetable-scrollable-footer-table');
+                    scrollableBodyTable.style.width = scrollableBodyTable.offsetWidth + delta + 'px';
+                    scrollableHeaderTable.style.width = scrollableHeaderTable.offsetWidth + delta + 'px';
+                    if (scrollableFooterTable) {
+                        scrollableFooterTable.style.width = scrollableFooterTable.offsetWidth + delta + 'px';
+                    }
+                    let resizeColumnIndex = DomHandler.index(column);
+
+                    this.resizeColGroup(scrollableHeaderTable, resizeColumnIndex, newColumnWidth, null);
+                    this.resizeColGroup(scrollableBodyTable, resizeColumnIndex, newColumnWidth, null);
+                    this.resizeColGroup(scrollableFooterTable, resizeColumnIndex, newColumnWidth, null);
+                }
+                else {
+                    column.style.width = newColumnWidth + 'px';
+                }
+            }
 
             this.onColResize.emit({
                 element: column,
